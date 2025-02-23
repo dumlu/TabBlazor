@@ -1,3 +1,5 @@
+using TabBlazor;
+
 namespace Tabler.Docs.Data
 {
     public class Country

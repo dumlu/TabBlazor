@@ -15,3 +15,44 @@
     </div>
 </div>
 
+ @*
+
+ @* @inherits LayoutComponentBase
+
+<PageTitle>VegaTBeyannameNet</PageTitle>
+
+<div class="container-fluid d-flex flex-column vh-100">
+    <!-- Üst Menü (Header) -->
+    <nav class="navbar navbar-expand-lg navbar-dark bg-dark fixed-top">
+        <div class="container-fluid">
+            <a class="navbar-brand" href="/">VegaTBeyannameNet</a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav ms-auto">
+                    <li class="nav-item">
+                        <a class="nav-link" href="/">Ana Sayfa</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/ayarlar">Ayarlar</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/hakkinda">Hakkında</a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <div class="page">
+        <!-- Sol Menü -->
+        <MainNavigation />
+
+        <div class="page-wrapper">
+            <div class="container-fluid mt-2">
+                @Body
+            </div>
+        </div>
+    </div>
+</div>  *@

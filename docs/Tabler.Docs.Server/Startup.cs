@@ -6,6 +6,8 @@ using Microsoft.Extensions.Hosting;
 using Microsoft.EntityFrameworkCore;
 using TabBlazor.QuickTable.EntityFramework;
 using Tabler.Docs.Services;
+using System.Net.Http;
+using System;
 
 
 namespace Tabler.Docs.Server
@@ -30,6 +32,8 @@ namespace Tabler.Docs.Server
             services.AddServerSideBlazor();
            
             services.AddScoped<ICodeSnippetService, LocalSnippetService>();
+           // services.AddScoped(sp => new HttpClient { BaseAddress = new Uri("https://vegawebservices.azurewebsites.net/") });
+            services.AddHttpClient();
             services.AddDocs();
                 
             

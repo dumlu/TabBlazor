@@ -1,0 +1,155 @@
+﻿@page "/login"
+@using System.ComponentModel.DataAnnotations
+@using RestSharp
+@using System.Text.Json  <!-- JSON deserialize için -->
+@using Microsoft.JSInterop
+@inject NavigationManager NavigationManager  
+@inject IJSRuntime JSRuntime  
+
+<div class="container mt-5">
+    <h2 class="text-center">TabBlozar - Giriş Yap</h2>
+    <div class="row justify-content-center">
+        <div class="col-md-6">
+            <EditForm Model="@loginModel" OnValidSubmit="HandleLogin">
+                <DataAnnotationsValidator />
+                <ValidationSummary />
+
+                <div class="form-group mb-3">
+                    <label for="username">Kullanıcı Adı</label>
+                    <InputText id="username" class="form-control" @bind-Value="loginModel.Username" />
+                    <ValidationMessage For="@(() => loginModel.Username)" />
+                </div>
+
+                <div class="form-group mb-3">
+                    <label for="password">Şifre</label>
+                    <InputText id="password" type="password" class="form-control" @bind-Value="loginModel.Password" />
+                    <ValidationMessage For="@(() => loginModel.Password)" />
+                </div>
+
+                @if (!string.IsNullOrEmpty(errorMessage))
+                {
+                    <div class="alert alert-danger" role="alert">
+                        @errorMessage
+                    </div>
+                }
+
+                <button type="submit" class="btn btn-primary w-100" disabled="@isLoading">
+                    @(isLoading ? "Yükleniyor..." : "Giriş Yap")
+                </button>
+            </EditForm>
+        </div>
+    </div>
+</div>
+
+@code {
+    private LoginModel loginModel = new();
+    private string? errorMessage;
+    private bool isLoading = false;
+
+    private class LoginModel
+    {
+        [Required(ErrorMessage = "Kullanıcı adı boş olamaz.")]
+        public string Username { get; set; } = string.Empty;
+
+        [Required(ErrorMessage = "Şifre boş olamaz.")]
+        public string Password { get; set; } = string.Empty;
+    }
+
+    private class LoginRequest
+    {
+        public string LoginName { get; set; } = string.Empty;
+        public string Password { get; set; } = string.Empty;
+        public string TerminalName { get; set; } = "TBey";
+    }
+
+    // Web servisinden dönen yanıt modeli
+    private class LoginResponse
+    {
+        public bool isSuccess { get; set; }
+        public string token { get; set; } = string.Empty;
+        public string expiryDate { get; set; } = string.Empty;
+        public string RefreshTokenExpiryDate { get; set; } = string.Empty;
+        public string RefreshToken { get; set; } = string.Empty;
+        public UserDetail UserDetail { get; set; } = new();
+        public string Message { get; set; } = string.Empty;
+        public int StatusCode { get; set; }
+    }
+
+    private class UserDetail
+    {
+        public int id { get; set; }
+        public string LoginName { get; set; } = string.Empty;
+        public string Username { get; set; } = string.Empty;
+        public string UserLastName { get; set; } = string.Empty;
+        public string UserIp { get; set; } = string.Empty;
+        public string FullName { get; set; } = string.Empty;
+        public string Email { get; set; } = string.Empty;
+        public int Pyil { get; set; }
+        public int Pdonem { get; set; }
+        public string Ptip { get; set; } = string.Empty;
+        public int Pkurum { get; set; }
+        public string PTarih { get; set; } = string.Empty;
+        public string TerminalName { get; set; } = string.Empty;
+        public int Yid { get; set; }
+        public string[] UserRole { get; set; } = Array.Empty<string>();
+    }
+
+    private async Task HandleLogin()
+    {
+        errorMessage = null;
+        isLoading = true;
+
+        try
+        {
+            var client = new RestClient("https://vegawebservices.azurewebsites.net/");
+            var request = new RestRequest("api/Authentication/login", Method.Post);
+
+            var loginData = new LoginRequest
+            {
+                LoginName = loginModel.Username,
+                Password = loginModel.Password,
+                TerminalName = "TBey"
+            };
+
+            request.AddJsonBody(loginData);
+
+            var response = await client.ExecuteAsync(request);
+
+            if (response.StatusCode == System.Net.HttpStatusCode.OK)
+            {
+                // Yanıtı deserialize et
+                var loginResponse = JsonSerializer.Deserialize<LoginResponse>(response.Content);
+
+                if (loginResponse?.isSuccess == true)
+                {
+                    // Token'ı localStorage'a kaydet
+                    await JSRuntime.InvokeVoidAsync("localStorage.setItem", "authToken", loginResponse.token);
+
+                    // İsteğe bağlı: Refresh token'ı da saklayabilirsiniz
+                    await JSRuntime.InvokeVoidAsync("localStorage.setItem", "refreshToken", loginResponse.RefreshToken);
+
+                    // Dashboard'a yönlendir
+                    NavigationManager.NavigateTo("/dashboard");
+                }
+                else
+                {
+                    errorMessage = "Giriş başarısız: " + (loginResponse?.Message ?? "Bilinmeyen hata");
+                }
+            }
+            else
+            {
+                errorMessage = string.IsNullOrEmpty(response.Content) 
+                    ? "Giriş başarısız!" 
+                    : $"Hata: {response.Content}";
+            }
+        }
+        catch (Exception ex)
+        {
+            errorMessage = "Bir hata oluştu: " + ex.Message;
+        }
+        finally
+        {
+            isLoading = false;
+        }
+    }
+}
